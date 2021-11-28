@@ -1,24 +1,28 @@
 <template>
-    <div id="wrapper">
+    <div id="wrapper" :class="(typeof weather.main != 'undefined' && weather.main.temp > 16 ? 'warm' :'')">
      <main>
       <div class="search-box">
         <input
           type="text"
           class="search-bar form-control"
+          placeholder="Search..."
           v-model="query"
-          placeholder="Search...">
+          @keypress="fetchWeather"
+           >
       </div>
 
-      <div class="weather-wrap">
+      <div class="weather-wrap" v-if="(typeof weather.main != 'undefined')">
 
         <div class="location-box">
-          <div class="location">Bangladesh</div>
-          <div class="date">Monday 29 November 2021</div>
+          <!-- country or city name and country code -->
+          <div class="location">{{ weather.name }}, {{ weather.sys.country }}</div>
+          <div class="date">{{ dateFormatter() }}</div>
         </div>
 
         <div class="weather-box">
-          <div class="temp">8°C</div>
-          <div class="weather">Rain</div>
+          <div class="temp">{{ Math.round(weather.main.temp) }}°C</div>
+          <!-- temperature condition -->
+          <div class="weather">{{ weather.weather[0].main }}</div>
         </div>
 
       </div>
@@ -29,6 +33,10 @@
 <script>
 export default {
   name: 'Weather',
+    props: {
+    // msg: String
+  },
+
   data(){
      return{
           api_key: 'b73d6cafea04aa33d16fc26d63447873',
@@ -37,14 +45,41 @@ export default {
           weather: {}
      }
   },
-  props: {
-    // msg: String
-  }
+
+  methods: {
+    fetchWeather(e){
+        if(e.key == "Enter"){
+          //  fetch data from base url
+          fetch(`${this.base_url}weather?q=${this.query}&units=metric&APPID=${this.api_key}`)
+          .then(res => {
+             return res.json();
+          })
+          .then(this.setResults);
+        }
+    },
+
+    setResults(results){
+         this.weather = results;
+    },
+
+    dateFormatter(){
+         let date = new Date();
+         let months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+         let days = ["Sunday","Saturday","Friday","Thursday","Wednesday","Tuesday","Monday"];
+         let day = days[date.getDay()];
+         let currentDay = date.getDate();
+         let month = months[date.getMonth()];
+         let year = date.getFullYear();
+
+         return `${day} ${currentDay}, ${month} ${year}`;
+    }
+  },
 }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+/* template styling */
    #wrapper{
         background-image: url('../assets/cloud-blue-sky.jpg');
         background-size: cover;
@@ -56,6 +91,13 @@ export default {
      padding: 25px;
      background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.75));
 }
+
+/* temperature wise background image change */
+#wrapper.warm{
+    background-image: url('../assets/cloud-warm.jpg');
+}
+
+/* search box styling */
  .search-box{
       width: 100%;
       margin-bottom:  30px;
